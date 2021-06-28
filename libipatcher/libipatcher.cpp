@@ -500,7 +500,7 @@ int iBoot64Patch(char *deciboot, size_t decibootSize, void *bootargs_) noexcept{
     }
     printf("%s: Added sigpatches!\n", __FUNCTION__);
 
-    if (ibpf->has_kernel_load()) {
+    if (ibpf->has_kernel_load() && bootargs) {
         printf("%s: has_kernel_load is true!\n", __FUNCTION__);
         
         try { //do debugenabled patch
