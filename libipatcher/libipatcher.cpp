@@ -500,6 +500,24 @@ int iBoot64Patch(char *deciboot, size_t decibootSize, void *bootargs_) noexcept{
     }
     printf("%s: Added sigpatches!\n", __FUNCTION__);
 
+    try { //do unlock nvram patch
+        auto patch = ibpf->get_unlock_nvram_patch();
+        patches.insert(patches.end(), patch.begin(), patch.end());
+    } catch (...) {
+        printf("%s: Failed getting nlock nvram patch!\n", __FUNCTION__);
+        return -(__LINE__);
+    }
+    printf("%s: Added unlock nvram patch!\n", __FUNCTION__);
+            
+    try { //do freshnonce patch
+        auto patch = ibpf->get_freshnonce_patch();
+        patches.insert(patches.end(), patch.begin(), patch.end());
+    } catch (...) {
+        printf("%s: Failed getting freshnonce patch!\n", __FUNCTION__);
+        return -(__LINE__);
+    }
+    printf("%s: Added freshnonce patch!\n", __FUNCTION__);
+
     if (ibpf->has_kernel_load() && bootargs) {
         printf("%s: has_kernel_load is true!\n", __FUNCTION__);
         
@@ -522,25 +540,6 @@ int iBoot64Patch(char *deciboot, size_t decibootSize, void *bootargs_) noexcept{
             }
             printf("%s: Added bootarg patch!\n", __FUNCTION__);
         }
-        
-        try { //do unlock nvram patch
-            auto patch = ibpf->get_unlock_nvram_patch();
-            patches.insert(patches.end(), patch.begin(), patch.end());
-        } catch (...) {
-            printf("%s: Failed getting nlock nvram patch!\n", __FUNCTION__);
-            return -(__LINE__);
-        }
-        printf("%s: Added unlock nvram patch!\n", __FUNCTION__);
-                
-        try { //do freshnonce patch
-            auto patch = ibpf->get_freshnonce_patch();
-            patches.insert(patches.end(), patch.begin(), patch.end());
-        } catch (...) {
-            printf("%s: Failed getting freshnonce patch!\n", __FUNCTION__);
-            return -(__LINE__);
-        }
-        printf("%s: Added freshnonce patch!\n", __FUNCTION__);
-        
     }else{
         printf("%s: has_kernel_load is false!\n", __FUNCTION__);
     }
