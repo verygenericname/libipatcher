@@ -25,8 +25,8 @@ namespace tihmstar {
             fw_key iBECKey;
         };
     
-        fw_key getFirmwareKey(std::string device, std::string buildnum, std::string file);
-        pwnBundle getPwnBundleForDevice(std::string device, std::string buildnum = "");
+        fw_key getFirmwareKey(std::string device, std::string buildnum, std::string file, std::string boardconfig = "");
+        pwnBundle getPwnBundleForDevice(std::string device, std::string buildnum = "", std::string boardconfig = "");
     
         std::pair<char*,size_t>decryptFile3(const char *fbuf, size_t fbufSize, const fw_key &keys);
         std::pair<char*,size_t>extractKernel(const char *fbuf, size_t fbufSize, const fw_key &keys);

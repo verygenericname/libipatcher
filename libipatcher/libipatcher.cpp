@@ -109,7 +109,7 @@ namespace tihmstar {
         }
         std::string getRemoteFile(std::string url);
         std::string getRemoteDestination(std::string url);
-        std::string getFirmwareJson(std::string device, std::string buildnum);
+        std::string getFirmwareJson(std::string device, std::string buildnum, std::string boardconfig = "");
         std::string getDeviceJson(std::string device);
         std::pair<char*,size_t>patchfile32(const char *ibss, size_t ibssSize, const fw_key &keys, std::string findstr, void *param, std::function<int(char *, size_t, void *)> patchfunc);
 
@@ -193,10 +193,14 @@ std::string libipatcher::getRemoteDestination(std::string url){
 }
 
 
-string libipatcher::getFirmwareJson(std::string device, std::string buildnum){
+string libipatcher::getFirmwareJson(std::string device, std::string buildnum, std::string boardconfig){
     try {
         string url("localhost:8888/firmware/");
-        url += device + "/" + buildnum;
+        if(boardconfig == "") {
+            url += device + "/" + buildnum;
+        } else {
+            url += device + "/" + boardconfig + "/" + buildnum;
+        }
         return getRemoteFile(url);
     } catch (...) {
         //retrying with api server
@@ -235,7 +239,7 @@ string libipatcher::getDeviceJson(std::string device){
 }
 
 
-fw_key libipatcher::getFirmwareKey(std::string device, std::string buildnum, std::string file){
+fw_key libipatcher::getFirmwareKey(std::string device, std::string buildnum, std::string file, std::string boardconfig){
     if (file == "RestoreLogo")
         file = "AppleLogo";
     else if (file == "RestoreRamDisk")
@@ -249,7 +253,8 @@ fw_key libipatcher::getFirmwareKey(std::string device, std::string buildnum, std
     ptr_smart<jssytok_t*> tokens = NULL;
     long tokensCnt = 0;
     
-    string json = getFirmwareJson(device, buildnum);
+    string json = "";
+    json = boardconfig == "" ? getFirmwareJson(device, buildnum) : getFirmwareJson(device, buildnum, boardconfig);
     
     retassure((tokensCnt = jssy_parse(json.c_str(), json.size(), NULL, 0)) > 0, "failed to parse json");
     assure(tokens = (jssytok_t*)malloc(sizeof(jssytok_t)*tokensCnt));
@@ -711,11 +716,11 @@ pair<char*,size_t>libipatcher::extractKernel(const char *encfile, size_t encfile
     return pair<char*,size_t>{decibss,decibssSize};
 }
 
-pwnBundle libipatcher::getPwnBundleForDevice(std::string device, std::string buildnum){
+pwnBundle libipatcher::getPwnBundleForDevice(std::string device, std::string buildnum, std::string boardconfig){
     ptr_smart<jssytok_t*> tokens = NULL;
     long tokensCnt = 0;
 
-    auto getKeys = [](std::string device, std::string curbuildnum)->pwnBundle{
+    auto getKeys = [](std::string device, std::string curbuildnum, std::string boardconfig)->pwnBundle{
         pwnBundle rt;
         string firmwareUrl = "https://api.ipsw.me/v2.1/";
         firmwareUrl += device;
@@ -728,13 +733,18 @@ pwnBundle libipatcher::getPwnBundleForDevice(std::string device, std::string bui
         }catch(...){
             error("failed to get firmware url");
         }
-        rt.iBSSKey = getFirmwareKey(device, curbuildnum, "iBSS");
-        rt.iBECKey = getFirmwareKey(device, curbuildnum, "iBEC");
+        if(boardconfig == "") {
+            rt.iBSSKey = getFirmwareKey(device, curbuildnum, "iBSS");
+            rt.iBECKey = getFirmwareKey(device, curbuildnum, "iBEC");
+        } else {
+            rt.iBSSKey = getFirmwareKey(device, curbuildnum, "iBSS", boardconfig);
+            rt.iBECKey = getFirmwareKey(device, curbuildnum, "iBEC", boardconfig);
+        }
         return rt;
     };
     
     if (buildnum.size()) { //if buildnum is given, try to get keys once. error is fatal.
-        return getKeys(device,buildnum);
+        return getKeys(device,buildnum, boardconfig);
     }
     
     string json = getDeviceJson(device);
@@ -757,7 +767,7 @@ pwnBundle libipatcher::getPwnBundleForDevice(std::string device, std::string bui
         
         //if we are interested in *any* bundle, ignore errors until we run out of builds.
         try {
-            return getKeys(device,curbuildnum);
+            return getKeys(device,curbuildnum, boardconfig);
         } catch (...) {
             continue;
         }
