@@ -509,7 +509,7 @@ int iBoot64Patch(char *deciboot, size_t decibootSize, void *bootargs_) noexcept{
         auto patch = ibpf->get_unlock_nvram_patch();
         patches.insert(patches.end(), patch.begin(), patch.end());
     } catch (...) {
-        printf("%s: Failed getting nlock nvram patch!\n", __FUNCTION__);
+        printf("%s: Failed getting unlock nvram patch!\n", __FUNCTION__);
         return -(__LINE__);
     }
     printf("%s: Added unlock nvram patch!\n", __FUNCTION__);
