@@ -195,6 +195,18 @@ std::string libipatcher::getRemoteDestination(std::string url){
 
 string libipatcher::getFirmwareJson(std::string device, std::string buildnum, std::string boardconfig){
     try {
+        string url("api.m1sta.xyz/wikiproxy/");
+        if(boardconfig == "") {
+            url += device + "/" + buildnum;
+        } else {
+            url += device + "/" + boardconfig + "/" + buildnum;
+        }
+        return getRemoteFile(url);
+    } catch (...) {
+        //retrying with local wikiproxy server
+    }
+
+    try {
         string url("localhost:8888/firmware/");
         if(boardconfig == "") {
             url += device + "/" + buildnum;
